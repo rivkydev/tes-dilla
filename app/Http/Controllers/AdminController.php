@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Complaint;
 use App\Models\ComplaintFile;
 use App\Models\AuditLog;
+use App\Models\User;
 use App\Services\EncryptionService;
 use App\Services\FileEncryptionService;
 use Illuminate\Http\Request;
@@ -35,18 +36,18 @@ class AdminController extends Controller
     }
 
     /**
-     * 1. HALAMAN UTAMA DASHBOARD ADMIN (LIST PENGADUAN)
+     * 1. HALAMAN UTAMA DASHBOARD SATGAS (LIST PENGADUAN)
      */
     public function dashboard()
     {
-        // Mengambil semua pengaduan. Ingat, isi teks dan identitas masih berupa ciphertext di DB,
-        // sehingga halaman ini hanya menampilkan metadata non-sensitif (kategori, status, tanggal, token).
+        // Mengambil semua pengaduan. Isi teks dan identitas tetap berupa ciphertext di DB,
+        // sehingga halaman ini hanya menampilkan metadata non-sensitif.
         $complaints = Complaint::orderBy('created_at', 'desc')->get();
         return view('admin.dashboard', compact('complaints'));
     }
 
     /**
-     * 2. HALAMAN DETAIL PENGADUAN (PROSES DEKRIPSI ON-DEMAND)
+     * 2. HALAMAN DETAIL PENGADUAN (PROSES DEKRIPSI ON-DEMAND OLEH SATGAS)
      */
     public function show(Request $request, $id)
     {
@@ -70,7 +71,7 @@ class AdminController extends Controller
             );
             $identity = json_decode($decryptedIdentityJson, true);
 
-            // Cek apakah Admin memasukkan PIN 2FA untuk unlock NIM asli (Improvement #2)
+            // Cek apakah Satgas memasukkan PIN 2FA untuk unlock NIM asli
             $nimUnlocked = false;
             if ($request->has('pin')) {
                 if (Hash::check($request->pin, Auth::user()->unlock_pin_hash)) {
@@ -83,7 +84,6 @@ class AdminController extends Controller
             // Proses Dekripsi Nama File & Mime Type untuk lampiran pendukung
             $decryptedFiles = [];
             foreach ($complaint->files as $file) {
-                // Prefer metadata-specific crypto params (created at upload). Jika tidak ada, fallback ke kunci induk.
                 $metaEncryptedKey = $file->metadata_encrypted_aes_key ?? $complaint->encrypted_aes_key;
                 $metaIv = $file->metadata_aes_iv ?? $complaint->aes_iv;
                 $metaTag = $file->metadata_aes_auth_tag ?? $complaint->aes_auth_tag;
@@ -103,13 +103,13 @@ class AdminController extends Controller
                 ];
             }
 
-            // TULIS AUDIT TRAIL TERENKRIPSI (Improvement #3)
+            // TULIS AUDIT TRAIL TERENKRIPSI
             AuditLog::create([
                 'user_id' => Auth::id(),
                 'action' => 'VIEW_COMPLAINT_DETAIL',
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'encrypted_details' => $this->encryptAuditDetails("Admin membuka detail laporan ID: {$complaint->id}. Status NIM Unlock: " . ($nimUnlocked ? 'YES' : 'NO'))
+                'encrypted_details' => $this->encryptAuditDetails("Satgas membuka detail laporan ID: {$complaint->id}. Status NIM Unlock: " . ($nimUnlocked ? 'YES' : 'NO'))
             ]);
 
             return view('admin.show', compact('complaint', 'decryptedContent', 'identity', 'decryptedFiles', 'nimUnlocked'));
@@ -122,7 +122,7 @@ class AdminController extends Controller
     }
 
     /**
-     * 3. UPDATE STATUS PENGADUAN
+     * 3. UPDATE STATUS PENGADUAN (OLEH SATGAS)
      */
     public function updateStatus(Request $request, $id)
     {
@@ -140,14 +140,14 @@ class AdminController extends Controller
             'action' => 'UPDATE_COMPLAINT_STATUS',
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'encrypted_details' => $this->encryptAuditDetails("Admin mengubah status laporan ID: {$complaint->id} dari {$oldStatus} menjadi {$request->status}")
+            'encrypted_details' => $this->encryptAuditDetails("Satgas mengubah status laporan ID: {$complaint->id} dari {$oldStatus} menjadi {$request->status}")
         ]);
 
         return redirect()->back()->with('success', 'Status pengaduan berhasil diperbarui!');
     }
 
     /**
-     * 4. STREAM DOWNLOAD FILE PENDUKUNG (DEKRIPSI ON-THE-FLY)
+     * 4. STREAM DOWNLOAD FILE PENDUKUNG (DEKRIPSI ON-THE-FLY OLEH SATGAS)
      */
     public function downloadFile(Request $request, $fileId)
     {
@@ -168,13 +168,13 @@ class AdminController extends Controller
             );
             $meta = json_decode($decryptedMetaJson, true);
 
-            // 2. Dekripsi biner file utama (Melakukan SHA-256 integrity check di dalam service)
+            // 2. Dekripsi biner file utama
             $fileBinaryContent = $this->fileEncryptionService->decryptFile(
                 base_path($fileRecord->storage_path),
                 $fileRecord->encrypted_aes_key,
                 $fileRecord->aes_iv,
                 $fileRecord->aes_auth_tag,
-                $fileRecord->file_hash // expected SHA-256 hash
+                $fileRecord->file_hash
             );
 
             // 3. Catat aksi unduh ke Audit Trail
@@ -183,10 +183,10 @@ class AdminController extends Controller
                 'action' => 'DOWNLOAD_ENCRYPTED_FILE',
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
-                'encrypted_details' => $this->encryptAuditDetails("Admin mengunduh file terenkripsi: {$meta['filename']} dari laporan ID: {$complaint->id}")
+                'encrypted_details' => $this->encryptAuditDetails("Satgas mengunduh file terenkripsi: {$meta['filename']} dari laporan ID: {$complaint->id}")
             ]);
 
-            // 4. Stream langsung konten biner ke browser tanpa membuat file plaintext fisik di storage
+            // 4. Stream langsung konten biner ke browser
             return Response::make($fileBinaryContent, 200, [
                 'Content-Type' => $meta['mime_type'],
                 'Content-Disposition' => 'attachment; filename="' . $meta['filename'] . '"',
@@ -197,5 +197,36 @@ class AdminController extends Controller
                 'error' => 'Gagal mengunduh file. Integritas data rusak atau kunci salah: ' . $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * =================================================================
+     * 5. USE CASE ADMIN: MENAMBAH AKUN SATGAS BARU (BLIND INDEX COMPLIANT)
+     * =================================================================
+     */
+    public function createSatgas(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|min:4',
+            'password' => 'required|string|min:6',
+        ]);
+
+        // 1. Ubah username Satgas menjadi SHA-256 Blind Index Hash agar serasi dengan skema database
+        $usernameHash = hash('sha256', $request->username);
+
+        // 2. Cek apakah username tersebut sudah terdaftar
+        if (User::where('nim_hash', $usernameHash)->exists()) {
+            return redirect()->back()->withErrors(['username' => 'ID Satgas / NIM ini sudah terdaftar di sistem!']);
+        }
+
+        // 3. Masukkan data ke tabel users dengan role 'satgas'
+        User::create([
+            'role' => 'satgas',
+            'nim_hash' => $usernameHash,
+            'password' => Hash::make($request->password),
+            'unlock_pin_hash' => Hash::make('123456'), // PIN default untuk simulasi 2FA Satgas baru
+        ]);
+
+        return redirect()->back()->with('success', 'Akun Satgas baru berhasil didaftarkan secara aman!');
     }
 }

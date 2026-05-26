@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Http\Requests\RegisterRequest;
-use App\Http\Requests\LoginRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -13,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 class AuthController extends Controller
 {
     /**
-     * LOGIKA PROSES REGISTRASI MAHASISWA
+     * LOGIKA PROSES REGISTRASI MAHASISWA (Blind Index Creation)
      */
     public function register(RegisterRequest $request)
     {
@@ -34,41 +33,60 @@ class AuthController extends Controller
             'password' => Hash::make($request->password), // Bcrypt hashing bawaan Laravel
         ]);
 
-        // 4. Otomatis login setelah berhasil registrasi dan arahkan ke dashboard pengaduan
+        // 4. Otomatis login setelah berhasil registrasi
         Auth::login($user);
 
         return redirect()->route('complaints.index')->with('success', 'Registrasi berhasil! Anda otomatis masuk ke sistem.');
     }
 
     /**
-     * LOGIKA PROSES LOGIN MAHASISWA & ADMIN
+     * PROSES AUTENTIKASI / LOGIN (Mendukung Multi-Role Student, Satgas, Admin)
      */
-    public function login(LoginRequest $request)
+/**
+     * PROSES AUTENTIKASI / LOGIN (Mendukung Multi-Role Student, Satgas, Admin)
+     */
+    public function login(Request $request)
     {
-        // 1. Ambil NIM inputan dan hitung SHA-256 Blind Index-nya
-        $nimHash = hash('sha256', $request->nim);
+        // 1. Sesuaikan validasi agar membaca field 'nim' dari form HTML
+        $request->validate([
+            'nim'      => 'required|string', // Mengikuti name="nim" yang ada di blade
+            'password' => 'required|string',
+        ]);
 
-        // 2. Cari data user berdasarkan nim_hash tersebut
-        $user = User::where('nim_hash', $nimHash)->first();
+        // 2. Ubah input nim menjadi SHA-256 untuk pencocokan Blind Index di database
+        $hashedIdentity = hash('sha256', $request->nim);
 
-        // 3. Jika user ditemukan dan password-nya cocok (Bcrypt Check)
+        // 3. Cari user berdasarkan hash tersebut
+        $user = User::where('nim_hash', $hashedIdentity)->first();
+
+        // 4. Validasi keberadaan user dan kecocokan password
         if ($user && Hash::check($request->password, $user->password)) {
-            // Regenerasi session untuk mencegah serangan Session Fixation
-            $request->session()->regenerate();
             
+            // Regenerate session untuk mencegah serangan Session Fixation
+            $request->session()->regenerate();
             Auth::login($user);
 
-            // Jika yang login adalah admin, arahkan ke dashboard admin panel
+            // =================================================================
+            // PENGALIHAN ALUR BERDASARKAN ROLE (ZERO-TRUST ARCHITECTURE)
+            // =================================================================
+            
+            // Aktor Satgas: Dashboard Penyelidikan (Pegang Kunci Privat Dekripsi)
+            if ($user->role === 'satgas') {
+                return redirect()->route('admin.dashboard')->with('success', 'Otorisasi Berhasil. Selamat bekerja Satgas Penyelidik!');
+            }
+            
+            // Aktor Admin: Panel Manajemen Infrastruktur IT (Tanpa Akses Dokumen)
             if ($user->role === 'admin') {
-                return redirect()->route('admin.dashboard')->with('success', 'Selamat datang Admin!');
+                return redirect()->route('admin.management')->with('success', 'Otorisasi Berhasil. Selamat datang Admin Pengelola IT!');
             }
 
-            return redirect()->route('complaints.index')->with('success', 'Login Berhasil!');
+            // Aktor Mahasiswa / Student (Default)
+            return redirect()->route('complaints.index')->with('success', 'Selamat datang kembali!');
         }
 
-        // 4. Jika gagal, kembalikan pesan error demi keamanan (tanpa membocorkan mana yang salah antara NIM atau Password)
-        throw ValidationException::withMessages([
-            'nim' => 'Kredensial yang Anda masukkan tidak cocok dengan data kami.',
+        // Jika kombinasi salah, kembalikan dengan pesan eror standar keamanan (Generic Error)
+        return redirect()->back()->withInput()->withErrors([
+            'login_error' => 'Identitas atau password yang Anda masukkan salah.'
         ]);
     }
 

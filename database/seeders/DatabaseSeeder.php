@@ -10,13 +10,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Membuat Akun Admin Utama
-        // Karena Admin tidak punya NIM publik, kita gunakan string identitas admin yang di-hash
+        // 1. Akun Admin Pengelola IT (TIDAK BISA DEKRIPSI DATA)
         User::create([
-            'role'            => 'admin',
-            'nim_hash'        => hash('sha256', 'ADMIN_UTAMA'), 
-            'password'        => Hash::make('AdminBikiniBottom2026!'), // Password akun admin Anda
-            'unlock_pin_hash' => Hash::make('123456'), // PIN 2FA enkripsi pembuka berkas NIM Mahasiswa
+            'role'     => 'admin',
+            'nim_hash' => hash('sha256', 'ADMIN_IT'), 
+            'password' => Hash::make('AdminKampus2026!'),
+        ]);
+
+        // 2. Akun Satgas Penyelidik (YANG PEGANG KUNCI PRIVATE UNTUK DEKRIPSI)
+        User::create([
+            'role'            => 'satgas',
+            'nim_hash'        => hash('sha256', 'SATGAS_BERWENANG'), 
+            'password'        => Hash::make('SatgasAman2026!'),
+            'unlock_pin_hash' => Hash::make('123456'), // PIN 2FA Penyingkap NIM Pelapor
         ]);
     }
 }

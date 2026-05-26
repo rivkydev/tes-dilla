@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             // Role: student atau admin
-            $table->enum('role', ['student', 'admin'])->default('student');
+            $table->enum('role', ['student', 'satgas', 'admin'])->default('student');
             
             // Menggunakan hash NIM untuk login agar NIM tidak tersimpan plaintext di database
             $table->string('nim_hash')->unique()->nullable();

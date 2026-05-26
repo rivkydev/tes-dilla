@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Gate; // <-- WAJIB DI-IMPORT
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -23,6 +23,19 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        // 1. DEFINISI GERBANG MAHASISWA
+        Gate::define('access-student', function ($user) {
+            return $user->role === 'student';
+        });
+
+        // 2. DEFINISI GERBANG SATGAS (Pegang Hak Akses Kriptografi)
+        Gate::define('access-satgas', function ($user) {
+            return $user->role === 'satgas';
+        });
+
+        // 3. DEFINISI GERBANG ADMIN (Hanya Kelola Akun & Infrastruktur)
+        Gate::define('access-admin', function ($user) {
+            return $user->role === 'admin';
+        });
     }
 }
