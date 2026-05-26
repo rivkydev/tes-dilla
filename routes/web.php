@@ -10,6 +10,12 @@ Route::get('/', function () {
     return view('welcome'); 
 });
 
+// Footer Pages
+Route::view('/tentang', 'pages.tentang')->name('pages.tentang');
+Route::view('/privasi', 'pages.privasi')->name('pages.privasi');
+Route::view('/syarat', 'pages.syarat')->name('pages.syarat');
+Route::view('/kontak', 'pages.kontak')->name('pages.kontak');
+
 // Rute Guest (Belum Login)
 Route::middleware('guest')->group(function () {
     Route::view('/login', 'auth.login')->name('login');
@@ -49,6 +55,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/logout', [AuthController::class, 'logout']);
 });
 
 // Rute Publik Pelacakan Anonim

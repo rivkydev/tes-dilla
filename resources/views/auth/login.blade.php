@@ -1,48 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistem Pengaduan Mahasiswa</title>
+    <title>Login - SIPATUO ITH</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-slate-800 p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-700">
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-cyan-400">Sistem Pengaduan Mahasiswa</h1>
-            <p class="text-slate-400 text-sm mt-2">Gunakan kredensial Anda untuk masuk</p>
+<body class="bg-slate-950 text-slate-200 antialiased font-sans min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    
+    <!-- Background Decor -->
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-brand-600/20 rounded-full blur-[100px] pointer-events-none"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+    <div class="w-full max-w-5xl bg-slate-900/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-800 flex flex-col md:flex-row overflow-hidden relative z-10">
+        
+        <!-- Left Side: Branding & Info -->
+        <div class="w-full md:w-5/12 bg-slate-900/50 p-10 flex flex-col items-center justify-center border-r border-slate-800/50 relative overflow-hidden">
+            <!-- Glow effect behind logo -->
+            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/30 blur-[80px] rounded-full pointer-events-none"></div>
+            
+            <div class="relative z-10 flex flex-col items-center text-center">
+                <img src="{{ asset('img/logo-sipatuo.png') }}" alt="SIPATUO Logo" class="h-64 sm:h-80 w-auto object-contain mb-6 drop-shadow-[0_0_35px_rgba(59,130,246,0.6)] scale-110">
+                
+                <p class="text-slate-400 font-medium text-sm tracking-wide mb-8 mt-4">Aman. Terenkripsi. Terotorisasi.</p>
+
+                <a href="{{ route('complaints.track_form') }}" class="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors group mt-4">
+                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                    Lacak Pengaduan via Token
+                </a>
+            </div>
         </div>
 
-        @if(session('success'))
-            <div class="bg-emerald-500/10 border border-emerald-500 text-emerald-400 p-3 rounded-lg text-sm mb-4">
-                {{ session('success') }}
-            </div>
-        @endif
+        <!-- Right Side: Login Form -->
+        <div class="w-full md:w-7/12 p-10 lg:p-16 flex flex-col justify-center">
+            <div class="max-w-md mx-auto w-full">
+                <div class="text-center mb-8">
+                    <h1 class="text-2xl font-bold text-white">Selamat Datang Kembali</h1>
+                    <p class="text-slate-400 text-sm mt-2">Gunakan kredensial Anda untuk masuk ke sistem</p>
+                </div>
 
-        @if($errors->any())
-            <div class="bg-rose-500/10 border border-rose-500 text-rose-400 p-3 rounded-lg text-sm mb-4">
-                {{ $errors->first() }}
-            </div>
-        @endif
+                @if(session('success'))
+                    <div class="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3 text-emerald-400 text-sm font-medium">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ session('success') }}
+                    </div>
+                @endif
 
-        <form action="{{ route('login.process') }}" method="POST" class="space-y-5">
-            @csrf
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-1">NIM / Identitas Admin</label>
-                <input type="text" name="nim" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500 transition">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-300 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 focus:outline-none focus:border-cyan-500 transition">
-            </div>
-            <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-semibold py-2.5 rounded-lg transition shadow-lg shadow-cyan-500/20">
-                Masuk ke Sistem
-            </button>
-        </form>
+                @if($errors->any())
+                    <div class="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center gap-3 text-rose-400 text-sm font-medium">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {{ $errors->first() }}
+                    </div>
+                @endif
 
-        <div class="mt-6 text-center text-sm text-slate-400 space-y-2">
-            <p>Belum punya akun? <a href="{{ route('register') }}" class="text-cyan-400 hover:underline">Registrasi Mahasiswa</a></p>
-            <p><a href="{{ route('complaints.track_form') }}" class="text-slate-400 hover:text-slate-200 underline text-xs">Lacak Pengaduan via Token Anonim</a></p>
+                <form action="{{ route('login.process') }}" method="POST" class="space-y-5">
+                    @csrf
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1.5">NIM / Identitas Admin</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </div>
+                            <input type="text" name="nim" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition" placeholder="Masukkan NIM atau ID">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1.5">Password</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            </div>
+                            <input type="password" name="password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-11 pr-4 py-3 text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div class="pt-2">
+                        <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-green-500 hover:from-blue-400 hover:to-green-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/25 hover:shadow-green-500/40 hover:-translate-y-0.5">
+                            Masuk
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-8 pt-8 border-t border-slate-800 text-center">
+                    <p class="text-sm text-slate-400">
+                        Belum memiliki akun mahasiswa? 
+                        <a href="{{ route('register') }}" class="text-brand-400 hover:text-brand-300 font-semibold transition-colors">Daftar Sekarang</a>
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
 </body>
