@@ -76,8 +76,8 @@
                 <!-- Logo Centered -->
                 <div class="flex justify-center mb-6 relative">
                     <!-- Glow effect -->
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-500/40 blur-[120px] rounded-full w-96 h-96 pointer-events-none"></div>
-                    <img src="{{asset('img/logo-sipatuo.png')}}" alt="SIPATUO Logo" class="relative z-10 h-64 sm:h-80 md:h-[28rem] w-auto object-contain drop-shadow-[0_0_40px_rgba(59,130,246,0.7)] scale-110">
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-500/40 blur-[100px] rounded-full w-64 h-64 pointer-events-none"></div>
+                    <img src="{{asset('img/logo-sipatuo.png')}}" alt="SIPATUO Logo" class="relative z-10 h-48 sm:h-56 md:h-64 w-auto object-contain drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]">
                 </div>
 
                 <!-- Logo serves as the main heading -->

@@ -16,6 +16,15 @@
                             500: '#0ea5e9',
                             600: '#0284c7',
                         }
+                    },
+                    keyframes: {
+                        'slide-right': {
+                            '0%': { opacity: 0, transform: 'translateX(-40px)' },
+                            '100%': { opacity: 1, transform: 'translateX(0)' }
+                        }
+                    },
+                    animation: {
+                        'slide-right': 'slide-right 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards'
                     }
                 }
             }
@@ -36,9 +45,9 @@
             <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/30 blur-[80px] rounded-full pointer-events-none"></div>
             
             <div class="relative z-10 flex flex-col items-center text-center">
-                <img src="{{ asset('img/logo-sipatuo.png') }}" alt="SIPATUO Logo" class="h-64 sm:h-80 w-auto object-contain mb-6 drop-shadow-[0_0_35px_rgba(59,130,246,0.6)] scale-110">
+                <img src="{{ asset('img/logo-sipatuo.png') }}" alt="SIPATUO Logo" class="h-40 sm:h-48 w-auto object-contain mb-6 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]">
                 
-                <p class="text-slate-400 font-medium text-sm tracking-wide mb-8 mt-4">Aman. Terenkripsi. Terotorisasi.</p>
+                <p class="text-slate-400 font-medium text-sm tracking-wide mb-8 mt-2">Aman. Terenkripsi. Terotorisasi.</p>
 
                 <a href="{{ route('login') }}" class="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors group mt-4">
                     <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/></svg>
@@ -47,8 +56,8 @@
             </div>
         </div>
 
-        <!-- Right Side (Visually Left): Register Form -->
-        <div class="w-full md:w-7/12 p-10 lg:p-16 flex flex-col justify-center">
+        <!-- Right Side: Register Form -->
+        <div class="w-full md:w-7/12 p-10 lg:p-16 flex flex-col justify-center animate-slide-right">
             <div class="max-w-md mx-auto w-full">
                 <div class="text-center mb-8">
                     <h1 class="text-2xl font-bold text-white">Registrasi Mahasiswa</h1>
@@ -91,11 +100,15 @@
                     </div>
                 </form>
 
-                <div class="mt-8 pt-8 border-t border-slate-800 text-center">
+                <div class="mt-8 pt-8 border-t border-slate-800 text-center flex flex-col gap-4">
                     <p class="text-sm text-slate-400">
                         Sudah punya akun? 
                         <a href="{{ route('login') }}" class="text-brand-400 hover:text-brand-300 font-semibold transition-colors">Masuk di sini</a>
                     </p>
+                    <a href="{{ url('/') }}" class="text-sm font-medium text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        Kembali ke Beranda
+                    </a>
                 </div>
             </div>
         </div>
